@@ -1,4 +1,5 @@
 import pygame
+import time
 
 from scripts.Level_entity.Coins_class import Coin, SpecialCoin, Fruit
 from scripts.Level_entity.Map_class import Map, WIDTH, HEIGHT
@@ -18,6 +19,7 @@ class Level:
         self._player = None
         self._enemies = []
         self._pause_UI = None
+        self._score_label = pygame.font.Font("resources/fonts/color basic.ttf", 30).render("0", True, pygame.Color("white"))
 
     def render(self):
         self._map.render(self._screen)
@@ -48,6 +50,8 @@ class Level:
                     self._enemies.append(Enemy(enemy_count, self._screen, (x + j * elem_x + 8, y + i * elem_y)))
                     self._enemies[enemy_count].render()
                     enemy_count += 1
+        x, y = self._map.get_coords()[0] + 50, self._map.get_coords()[1] - 50
+        self._screen.blit(self._score_label, (x, y))
 
         pygame.draw.rect(self._screen, pygame.Color("black"),
                          pygame.Rect((self._map.get_coords()[0] + self._map.size[0],
@@ -71,7 +75,8 @@ class Level:
             if not coin.get_if_eaten():
                 new_special_coins.append(coin)
             else:
-                self._change_enemies_mode()
+                pass
+                #self._change_enemies_mode()
 
         del self._special_coins
         self._special_coins = new_special_coins.copy()
@@ -84,21 +89,26 @@ class Level:
             enemy.change_mode()
 
     def finish_level(self, winning: bool):
-        print(self._player.get_lives())
         if winning:
-            pass  # вывести UI победы
-        elif self._player.get_lives() == 3:
+            rect = pygame.image.load("resources/images/UI/win.png").get_rect()
+            rect.center = (400, 400)
+            self._screen.blit(pygame.image.load("resources/images/UI/win.png"), rect)
+            pygame.display.flip()
+            time.sleep(3)
+            exit(0)
+        elif self._player.get_lives() > 1:
             self._player.damaged()
             self._player.reset()
             for enemy in self._enemies:
                 enemy.reset()
-        elif self._player.get_lives() == 2:
-            self._player.damaged()
-            self._player.reset()
-            for enemy in self._enemies:
-                enemy.reset()
+            return True
         else:
-            print('die') # Вывести UI поражения
+            rect = pygame.image.load("resources/images/UI/gameover.png").get_rect()
+            rect.center = (400, 400)
+            self._screen.blit(pygame.image.load("resources/images/UI/gameover.png"), rect)
+            pygame.display.flip()
+            time.sleep(3)
+            exit(0)
 
     def process(self):
         run = True
@@ -112,9 +122,6 @@ class Level:
                     exit(0)
                 elif event.type == pygame.KEYDOWN:
                     self._player.change_direction(event.key)
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    pass  # self._pause_UI.render(self._screen)  и чек если попал в коллайдер
-                    run = None  # возвращаемся нажали ли нам выход в из игры
             self._player.move(self._map)
             self._screen.fill(pygame.Color("black"))
             self._map.render(self._screen)
@@ -124,14 +131,20 @@ class Level:
             self._player.update()
             for enemy in self._enemies:
                 if enemy.get_rect().colliderect(self._player.get_rect()):
-                    self.finish_level(False)
+                    run = self.finish_level(False)
                 enemy.move(self._map)
                 enemy.update()
+
             pygame.draw.rect(self._screen, pygame.Color("black"),
                              pygame.Rect((self._map.get_coords()[0] - 50, self._map.get_coords()[1]),
                                          (50, self._map.size[1])))
             pygame.draw.rect(self._screen, pygame.Color("black"),
                              pygame.Rect((self._map.get_coords()[0] + self._map.size[0], self._map.get_coords()[1]),
                                          (50, self._map.size[1])))
-            pygame.display.flip()
 
+            x, y = self._map.get_coords()[0] + 20, self._map.get_coords()[1] - 50
+            self._score_label = pygame.font.Font("resources/fonts/color basic.ttf", 20).\
+                render(str(self._player.get_score()), True, pygame.Color("white"))
+            self._screen.blit(self._score_label, (x, y))
+            pygame.display.flip()
+        self._screen.fill(pygame.Color("black"))

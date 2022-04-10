@@ -2,6 +2,7 @@ import pygame
 import time
 
 from scripts.Level_entity.Level_class import Level
+from scripts.UI.Menu import Menu
 
 WIDTH, HEIGTH = 800, 800
 
@@ -13,7 +14,7 @@ class Game:
         self.level_num = 1
         self.screen = pygame.display.set_mode((WIDTH, HEIGTH))
         self.level = Level(self.level_num, self.screen)
-        self.opened_UI = None  # Для меню/уровня/...
+        self._menu = Menu(self.screen)
 
         self._set_screen()
 
