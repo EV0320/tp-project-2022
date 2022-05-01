@@ -1,5 +1,5 @@
 import pygame
-
+from scripts import Game_class
 from scripts.UI.Button import Button
 
 
@@ -35,6 +35,7 @@ class Menu:
 
 			if play_pressed:
 				do = False
+				break
 			elif quit_pressed:
 				exit(0)
 
