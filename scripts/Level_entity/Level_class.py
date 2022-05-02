@@ -8,9 +8,8 @@ from scripts.Level_entity.PacMan_class import PacMan
 from scripts.UI.Button import Button
 from scripts.UI.Pause import Pause
 
-class Level:
-	LEVEL_ITEMS = {}  # Словарь плюшек для каждого уровня
 
+class Level:
 	def __init__(self, number, screen):
 		self._all_sprites_list = pygame.sprite.Group()
 		self.number = number
@@ -21,8 +20,10 @@ class Level:
 		self._player = None
 		self._enemies = []
 		self._pause_UI = None
+		self._hearts_image = pygame.image.load("resources/images/Pacman/heart.png").convert()
 		self._score_label = pygame.font.Font("resources/fonts/color basic.ttf", 30).render("0", True, pygame.Color("white"))
-		self._pause = Button(338, 700, 'resources/images/UI/menub1.png', 'resources/images/UI/menub2.png', self._all_sprites_list, 'pause')
+		self._pause = Button(338, 700, "resources/images/UI/menub1.png", "resources/images/UI/menub2.png",
+							 self._all_sprites_list, "pause")
 
 	def render(self):
 		self._map.render(self._screen)
@@ -57,12 +58,21 @@ class Level:
 		self._screen.blit(self._score_label, (x, y))
 
 		pygame.draw.rect(self._screen, pygame.Color("black"),
-						 pygame.Rect((self._map.get_coords()[0] + self._map.size[0],
-									  self._map.get_coords()[1] + self._map.size[1]),
-									 (50, self._map.size[1])))
+							pygame.Rect((self._map.get_coords()[0] + self._map.size[0],
+										 self._map.get_coords()[1] + self._map.size[1]),
+										(50, self._map.size[1])))
 		pygame.draw.rect(self._screen, pygame.Color("black"),
-						 pygame.Rect((self._map.get_coords()[0] - 50, self._map.get_coords()[1]),
+						pygame.Rect((self._map.get_coords()[0] - 50, self._map.get_coords()[1]),
 									 (50, self._map.size[1])))
+
+		self._render_hearts()
+
+	def _render_hearts(self):
+		heart_size = self._hearts_image.get_size()
+		heart_start_coords = self._map.get_coords()[0] + self._map.size[0], self._map.get_coords()[1] - heart_size[1] - 10
+
+		for i in range(1, self._player.get_lives() + 1):
+			self._screen.blit(self._hearts_image, (heart_start_coords[0] - heart_size[0] * i, heart_start_coords[1]))
 
 	def _check_coins(self):
 		new_coins = []
@@ -78,8 +88,8 @@ class Level:
 			if not coin.get_if_eaten():
 				new_special_coins.append(coin)
 			else:
-				pass
-				#self._change_enemies_mode()
+				self._change_enemies_mode()
+				pygame.time.set_timer(pygame.USEREVENT, 7000)
 
 		del self._special_coins
 		self._special_coins = new_special_coins.copy()
@@ -125,7 +135,11 @@ class Level:
 				if event.type == pygame.QUIT:
 					exit(0)
 				elif event.type == pygame.KEYDOWN:
-					self._player.change_direction(event.key)
+					self._player.change_direction(event.key, self._map)
+				elif event.type == pygame.USEREVENT:
+					for enemy in self._enemies:
+						enemy.change_mode()
+					pygame.time.set_timer(pygame.USEREVENT, 0)
 			self._player.move(self._map)
 			self._screen.fill(pygame.Color("black"))
 			self._map.render(self._screen)
@@ -134,8 +148,11 @@ class Level:
 
 			self._player.update()
 			for enemy in self._enemies:
-				if enemy.get_rect().colliderect(self._player.get_rect()):
+				if enemy.eat(self._player) == 1:
 					run = self.finish_level(False)
+				elif enemy.eat(self._player) == 2:
+					enemy.reset()
+					self._player.eat_ghost(enemy)
 				enemy.move(self._map)
 				enemy.update()
 
@@ -157,5 +174,8 @@ class Level:
 				pause.show()
 				if pause.startover:
 					run = False
+
+			self._render_hearts()
 			pygame.display.flip()
+
 		self._screen.fill(pygame.Color("black"))

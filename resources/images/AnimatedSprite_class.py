@@ -1,4 +1,5 @@
 import pygame
+import random
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
@@ -11,6 +12,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
 
         self.image = self.frames[0][1]
         self.time = 0
+        self.clock = pygame.time.Clock
 
         self.count = 0
 
@@ -27,26 +29,15 @@ class AnimatedSprite(pygame.sprite.Sprite):
                 row.append(cut)
             self.frames.append(row)
 
-    def update(self, x, y):
-        self.count += 1
-        if self.count == 2:
-            self.count = 0
-            return
-        row = 0
-        if abs(x) >= abs(y):
-            if x <= 0:
-                row = 1
-            else:
-                row = 2
-        else:
-            if y <= 0:
-                row = 3
-            else:
-                row = 0
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames[row])
-        self.image = self.frames[row][self.cur_frame]
-        if not x and not y:
-            self.image = self.frames[0][1]
+    def update(self, direction):
+        self.time = pygame.time.get_ticks() // 250
+        self.cur_frame = self.time % len(self.frames[0])
+        if direction >= len(self.frames):
+            direction = 0
+        if self.cur_frame >= len(self.frames[direction]):
+            self.cur_frame = 0
+        self.image = self.frames[direction][self.cur_frame]
+        self.time %= len(self.frames[0])
 
     def get_rect(self):
         return self.image.get_rect()

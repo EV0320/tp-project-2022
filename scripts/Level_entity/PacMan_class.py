@@ -10,14 +10,14 @@ class PacMan(pygame.sprite.Sprite):
         self._speed = 0.45
         self._coords = Vector2(*start_pos)
 
-        self._DELTA = {pygame.K_a: (Vector2(-self._speed, 0), (-9, 0)),
-                       pygame.K_s: (Vector2(0, self._speed), (0, 9)),
-                       pygame.K_d: (Vector2(self._speed, 0), (9, 0)),
-                       pygame.K_w: (Vector2(0, -self._speed), (0, -9)),
-                       pygame.K_LEFT: (Vector2(-self._speed, 0), (-9, 0)),
-                       pygame.K_DOWN: (Vector2(0, self._speed), (0, 9)),
-                       pygame.K_RIGHT: (Vector2(self._speed, 0), (9, 0)),
-                       pygame.K_UP: (Vector2(0, -self._speed), (0, -9))}
+        self._DELTA = {pygame.K_a: (Vector2(-self._speed, 0), (-10, 0), 2),
+                       pygame.K_s: (Vector2(0, self._speed), (0, 10), 1),
+                       pygame.K_d: (Vector2(self._speed, 0), (10, 0), 3),
+                       pygame.K_w: (Vector2(0, -self._speed), (0, -10), 0),
+                       pygame.K_LEFT: (Vector2(-self._speed, 0), (-10, 0), 2),
+                       pygame.K_DOWN: (Vector2(0, self._speed), (0, 10), 1),
+                       pygame.K_RIGHT: (Vector2(self._speed, 0), (10, 0), 3),
+                       pygame.K_UP: (Vector2(0, -self._speed), (0, -10), 0)}
 
         self._sprite = AnimatedSprite(pygame.image.load("resources/images/Pacman/PacMan.png"))
         self._collider = self._sprite.get_rect()
@@ -27,8 +27,9 @@ class PacMan(pygame.sprite.Sprite):
         self._collider.center = center
         self._lives = 3
         self._score = 0
-        self._direction = [(0, 0), (0, 0)]
+        self._direction = [Vector2(0, 0), (0, 0), 2]
         self._start_pos = Vector2(*start_pos).copy()
+        self._sprite.update(self._direction[2])
 
     def eat(self, objects):
         rects = list(map(lambda x: x.get_rect(), objects))
@@ -36,6 +37,9 @@ class PacMan(pygame.sprite.Sprite):
         for ind in indexes:
             objects[ind].got_eaten()
             self._score += objects[ind].get_price()
+
+    def eat_ghost(self, ghost):
+        self._score += ghost.get_price()
 
     def move(self, map_object):
         map_coords = map_object.get_coords()
@@ -53,8 +57,18 @@ class PacMan(pygame.sprite.Sprite):
                 self._collider.topleft = (map_coords[0], self._collider.y)
                 self._coords = (map_coords[0], self._collider.y)
 
-    def change_direction(self, direction):
-        self._direction = self._DELTA[direction]
+        self._sprite.update(self._direction[2])
+
+    def change_direction(self, direction, map_object):
+        try:
+            object = map_object.get_object_rect(
+                (self._collider.x + self._DELTA[direction][1][0], self._collider.y + self._DELTA[direction][1][1]))
+
+            if object not in "WGH":
+                self._direction = self._DELTA[direction]
+        except KeyError:
+            pass
+
 
     def get_lives(self):
         return self._lives

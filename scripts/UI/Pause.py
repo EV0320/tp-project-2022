@@ -7,7 +7,7 @@ class Pause:
 	def __init__(self, screen):
 		self._all_sprites_list = pygame.sprite.Group()
 		self._pause = pygame.image.load('resources/images/UI/pause.png')
-		self._menu = Button(172.5, 500, 'resources/images/UI/menu1.png', 'resources/images/UI/menu2.png', self._all_sprites_list, 'menu')
+		self._menu = Button(172.5, 500, 'resources/images/UI/quit1.png', 'resources/images/UI/quit2.png', self._all_sprites_list, 'quit')
 		self._resume = Button(self._menu.get_rect()[0], self._menu.get_rect()[1] - 150,
 								'resources/images/UI/resume1.png', 'resources/images/UI/resume2.png', self._all_sprites_list, 'resume')
 		self.startover = False
